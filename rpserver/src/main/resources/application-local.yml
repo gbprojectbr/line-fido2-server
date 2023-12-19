@@ -7,11 +7,11 @@ spring:
 fido2:
   rp:
     id: localhost
-    origin: localhost
+    origin: https://localhost:8080
     port: 8080
 
 conformance:
-  url: http://localhost:8080
+  url: https://localhost:8080
 logging:
   level:
     org.springframework.web: DEBUG

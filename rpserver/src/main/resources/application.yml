@@ -5,6 +5,11 @@ spring:
     use-legacy-processing: true
 server:
   port: 8080
+  ssl:
+    key-store-type: PKCS12
+    key-store: classpath:keystore/baeldung.p12
+    key-store-password: 123456
+    key-alias: baeldung
 logbook:
   write:
     level: INFO
@@ -19,13 +24,12 @@ logbook:
     - /health
 fido2-server:
   scheme: http
-  host: localhost
-  port: 8081
+  host: obk-enrollments-api.obk-hml.limbo.work
+  port: 80
   endpoint:
-    get-reg-challenge: /fido2/reg/challenge
+    get-reg-challenge: /enrollments/urn:picpay:9bad39cb-123c-4c84-b935-e23d521ef00b/fido-registration-options
     get-auth-challenge: /fido2/auth/challenge
-    send-reg-response: /fido2/reg/response
+    send-reg-response: /enrollments/urn:picpay:9bad39cb-123c-4c84-b935-e23d521ef00b/fido-registration
     send-auth-response: /fido2/auth/response
     get-delete-credentials: /fido2/credentials
-
 

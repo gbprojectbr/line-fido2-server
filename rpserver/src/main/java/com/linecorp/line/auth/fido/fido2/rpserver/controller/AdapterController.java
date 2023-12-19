@@ -16,6 +16,8 @@
 
 package com.linecorp.line.auth.fido.fido2.rpserver.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.line.auth.fido.fido2.common.PublicKeyCredentialRpEntity;
 import com.linecorp.line.auth.fido.fido2.common.crypto.Digests;
 import com.linecorp.line.auth.fido.fido2.common.server.*;
@@ -119,7 +121,7 @@ public class AdapterController {
     public ServerPublicKeyCredentialCreationOptionsResponse getRegistrationChallenge(
             @RequestHeader String host,
             @RequestBody ServerPublicKeyCredentialCreationOptionsRequest optionsRequest,
-            HttpServletResponse httpServletResponse) {
+            HttpServletResponse httpServletResponse) throws JsonProcessingException {
 
         // set header
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -134,34 +136,36 @@ public class AdapterController {
         user.setId(createUserId(optionsRequest.getUsername()));
         user.setDisplayName(optionsRequest.getDisplayName());
 
-        RegOptionRequest regOptionRequest = RegOptionRequest
-                .builder()
-                .rp(rp)
-                .user(user)
-                .authenticatorSelection(optionsRequest.getAuthenticatorSelection())
-                .attestation(optionsRequest.getAttestation())
-                .credProtect(optionsRequest.getCredProtect())
+        RequestOptionsData reqData = RequestOptionsData.builder()
+                .rp(rpId)
+                .platform("ANDROID")
                 .build();
 
-        HttpEntity<RegOptionRequest> request = new HttpEntity<>(regOptionRequest, httpHeaders);
-        RegOptionResponse response = restTemplate.postForObject(regChallengeUri, request, RegOptionResponse.class);
+        RegOptionRequest1 regOptionRequest = RegOptionRequest1
+                .builder()
+                .data(reqData)
+                .build();
+
+        HttpEntity<RegOptionRequest1> request = new HttpEntity<>(regOptionRequest, httpHeaders);
+        ObjectMapper objectMapper = new ObjectMapper();
+        System.out.println(objectMapper.writeValueAsString(request));
+        RegOptionResponse1 response = restTemplate.postForObject(regChallengeUri, request, RegOptionResponse1.class);
+        System.out.println(objectMapper.writeValueAsString(response));
 
         ServerPublicKeyCredentialCreationOptionsResponse serverResponse = ServerPublicKeyCredentialCreationOptionsResponse
                 .builder()
-                .rp(response.getRp())
-                .user(response.getUser())
-                .attestation(response.getAttestation())
-                .authenticatorSelection(response.getAuthenticatorSelection())
-                .challenge(response.getChallenge())
-                .excludeCredentials(response.getExcludeCredentials())
-                .pubKeyCredParams(response.getPubKeyCredParams())
-                .timeout(response.getTimeout())
-                .extensions(response.getExtensions())
+                .rp(response.getData().getRp())
+                .user(response.getData().getUser())
+                .attestation(response.getData().getAttestation())
+                .authenticatorSelection(response.getData().getAuthenticatorSelection())
+                .challenge(response.getData().getChallenge())
+                .excludeCredentials(response.getData().getExcludeCredentials())
+                .pubKeyCredParams(response.getData().getPubKeyCredParams())
+                .timeout(response.getData().getTimeout())
+                .extensions(response.getData().getExtensions())
                 .build();
 
         serverResponse.setStatus(Status.OK);
-
-        httpServletResponse.addCookie(new Cookie(COOKIE_NAME, response.getSessionId()));
 
         return serverResponse;
     }
@@ -170,27 +174,27 @@ public class AdapterController {
     public AdapterServerResponse sendRegistrationResponse(
             @RequestHeader String host,
             @RequestBody AdapterRegServerPublicKeyCredential clientResponse,
-            HttpServletRequest httpServletRequest) {
+            HttpServletRequest httpServletRequest) throws JsonProcessingException {
 
         AdapterServerResponse serverResponse;
 
         // get session id
-        Cookie[] cookies = httpServletRequest.getCookies();
-        if (cookies == null || cookies.length == 0) {
-            //error
-            serverResponse = new AdapterServerResponse();
-            serverResponse.setStatus(Status.FAILED);
-            serverResponse.setErrorMessage("Cookie not found");
-            return serverResponse;
-        }
+//        Cookie[] cookies = httpServletRequest.getCookies();
+//        if (cookies == null || cookies.length == 0) {
+//            //error
+//            serverResponse = new AdapterServerResponse();
+//            serverResponse.setStatus(Status.FAILED);
+//            serverResponse.setErrorMessage("Cookie not found");
+//            return serverResponse;
+//        }
 
-        String sessionId = null;
-        for (Cookie cookie : cookies) {
-            if (COOKIE_NAME.equals(cookie.getName())) {
-                sessionId = cookie.getValue();
-                break;
-            }
-        }
+//        String sessionId = null;
+//        for (Cookie cookie : cookies) {
+//            if (COOKIE_NAME.equals(cookie.getName())) {
+//                sessionId = cookie.getValue();
+//                break;
+//            }
+//        }
 
         // prepare origin
         String scheme = httpServletRequest.getScheme();
@@ -202,26 +206,33 @@ public class AdapterController {
 
         if (!StringUtils.isEmpty(rpPort)) {
             builder.append(":")
-                   .append(rpPort);
+                    .append(rpPort);
         }
 
         // set header
         HttpHeaders httpHeaders = new HttpHeaders();
 
-        RegisterCredential registerCredential = new RegisterCredential();
-        ServerRegPublicKeyCredential serverRegPublicKeyCredential = new ServerRegPublicKeyCredential();
-        serverRegPublicKeyCredential.setId(clientResponse.getId());
-        serverRegPublicKeyCredential.setType(clientResponse.getType());
-        serverRegPublicKeyCredential.setResponse(clientResponse.getResponse());
-        serverRegPublicKeyCredential.setExtensions(clientResponse.getExtensions());
-        registerCredential.setServerPublicKeyCredential(serverRegPublicKeyCredential);
-        registerCredential.setRpId(rpId);
-        registerCredential.setSessionId(sessionId);
-        registerCredential.setOrigin(builder.toString());
+        RegisterCredentialClientResponse clientResponseObj = new RegisterCredentialClientResponse();
+        clientResponseObj.setClientDataJSON(clientResponse.getResponse().getClientDataJSON());
+        clientResponseObj.setAttestationObject(clientResponse.getResponse().getAttestationObject());
+//        clientResponseObj.setTransports(clientResponse.getResponse().getTransports());
 
-        HttpEntity<RegisterCredential> request = new HttpEntity<>(registerCredential, httpHeaders);
+        RegisterCredential1Data data = new RegisterCredential1Data();
+        data.setId(clientResponse.getId());
+        data.setRawId(clientResponse.getRawId());
+        data.setClientExtensionResults(clientResponse.getExtensions());
+        data.setAuthenticatorAttachment("platform");
+        data.setType(clientResponse.getType());
+        data.setResponse(clientResponseObj);
 
-        restTemplate.postForObject(regResponseUri, request, RegisterCredentialResult.class);
+        RegisterCredential1 registerCredential = new RegisterCredential1();
+        registerCredential.setData(data);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        HttpEntity<RegisterCredential1> request = new HttpEntity<>(registerCredential, httpHeaders);
+
+        System.out.println(objectMapper.writeValueAsString(request));
+        restTemplate.postForObject(regResponseUri, request, Void.class);
 
         serverResponse = new AdapterServerResponse();
         serverResponse.setStatus(Status.OK);
@@ -308,7 +319,7 @@ public class AdapterController {
 
         if (!StringUtils.isEmpty(rpPort)) {
             builder.append(":")
-                   .append(rpPort);
+                    .append(rpPort);
         }
 
         // set header
@@ -335,11 +346,6 @@ public class AdapterController {
     }
 
     private String createUserId(String username) {
-        if (StringUtils.isEmpty(username)) {
-            return null;
-        }
-
-        byte[] digest = Digests.sha256(username.getBytes(StandardCharsets.UTF_8));
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        return username;
     }
 }

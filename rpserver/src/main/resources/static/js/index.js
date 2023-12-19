@@ -42,7 +42,11 @@ const abortSignal = abortController.signal;
 
 let performMakeCredReq = (makeCredReq) => {
     makeCredReq.challenge = base64UrlDecode(makeCredReq.challenge);
-    makeCredReq.user.id = base64UrlDecode(makeCredReq.user.id);
+//    makeCredReq.user.id = base64UrlDecode(makeCredReq.user.id);
+
+    const utf8Bytes = new TextEncoder().encode(makeCredReq.user.id)
+    const byteBuffer = new Uint8Array(utf8Bytes);
+    makeCredReq.user.id = byteBuffer;
 
     //Base64url decoding of id in excludeCredentials
     if (makeCredReq.excludeCredentials instanceof Array) {

@@ -16,26 +16,48 @@
 
 package com.linecorp.line.auth.fido.fido2.rpserver.config;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.TrustStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import javax.net.ssl.SSLContext;
+import java.security.cert.X509Certificate;
 
 @Configuration
 public class RestTemplateConfig {
     @Bean
-    RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+    public RestTemplate restTemplate() throws Exception {
+        return new RestTemplate(clientHttpRequestFactory());
+    }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        //ignore unknown field
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        converter.setObjectMapper(objectMapper);
-        restTemplate.getMessageConverters().add(converter);
-        return restTemplate;
+    private ClientHttpRequestFactory clientHttpRequestFactory() throws Exception {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient());
+
+        // Configurar timeout, se necessário
+        factory.setReadTimeout(5000);
+        factory.setConnectTimeout(5000);
+
+        return factory;
+    }
+
+    private HttpClient httpClient() throws Exception {
+        TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+
+        SSLContext sslContext = SSLContextBuilder
+                .create()
+                .loadTrustMaterial(acceptingTrustStrategy)
+                .build();
+
+        return org.apache.http.impl.client.HttpClients
+                .custom()
+                .setSSLContext(sslContext)
+                .setSSLHostnameVerifier(new NoopHostnameVerifier())
+                .build();
     }
 }
