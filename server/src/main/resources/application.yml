@@ -17,7 +17,7 @@ fido:
           minor: 0
 
   fido2:
-    session-ttl-millis: 180000
+    session-ttl-millis: 7200000
     accept-unregistered-authenticators: true
 
 logbook:
