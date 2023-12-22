@@ -34,7 +34,7 @@ logbook:
   exclude:
     - /health
 mds:
-  enable-mds : true
+  enable-mds : false
   sources:
     - name: fido-mds-v3
       enabled: true
