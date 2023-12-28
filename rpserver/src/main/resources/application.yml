@@ -28,8 +28,8 @@ fido2-server:
   port: 80
   endpoint:
     get-reg-challenge: /enrollments/{ENROLLMENT_ID}/fido-registration-options
-    get-auth-challenge: /fido2/auth/challenge
+    get-auth-challenge: /enrollments/{ENROLLMENT_ID}/fido-sign-options
     send-reg-response: /enrollments/{ENROLLMENT_ID}/fido-registration
-    send-auth-response: /fido2/auth/response
+    send-auth-response: /enrollments/{ENROLLMENT_ID}/consents/{CONSENT_ID}/authenticate
     get-delete-credentials: /fido2/credentials
 

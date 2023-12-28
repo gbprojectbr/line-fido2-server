@@ -19,7 +19,6 @@ package com.linecorp.line.auth.fido.fido2.rpserver.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.line.auth.fido.fido2.common.PublicKeyCredentialRpEntity;
-import com.linecorp.line.auth.fido.fido2.common.crypto.Digests;
 import com.linecorp.line.auth.fido.fido2.common.server.*;
 import com.linecorp.line.auth.fido.fido2.rpserver.config.FidoServerConfig;
 import com.linecorp.line.auth.fido.fido2.rpserver.model.AdapterAuthServerPublicKeyCredential;
@@ -40,10 +39,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.Base64;
 
 @Slf4j
@@ -67,6 +66,8 @@ public class AdapterController {
     private final FidoServerConfig fidoServerConfig;
 
     private final String COOKIE_NAME = "fido2-session-id";
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public AdapterController(RestTemplate restTemplate, FidoServerConfig fidoServerConfig) {
@@ -147,7 +148,6 @@ public class AdapterController {
                 .build();
 
         HttpEntity<RegOptionRequest1> request = new HttpEntity<>(regOptionRequest, httpHeaders);
-        ObjectMapper objectMapper = new ObjectMapper();
         System.out.println("request -------> " + objectMapper.writeValueAsString(request));
         String uri = regChallengeUri.replace("{ENROLLMENT_ID}", optionsRequest.getEnrollmentId());
         System.out.println("URI: " + uri);
@@ -230,7 +230,6 @@ public class AdapterController {
         RegisterCredential1 registerCredential = new RegisterCredential1();
         registerCredential.setData(data);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         HttpEntity<RegisterCredential1> request = new HttpEntity<>(registerCredential, httpHeaders);
 
         System.out.println("request -------> " + objectMapper.writeValueAsString(request));
@@ -248,42 +247,51 @@ public class AdapterController {
     public ServerPublicKeyCredentialGetOptionsResponse getAuthenticationChallenge(
             @RequestHeader String host,
             @RequestBody ServerPublicKeyCredentialGetOptionsRequest optionRequest,
-            HttpServletResponse httpServletResponse) {
+            HttpServletResponse httpServletResponse) throws JsonProcessingException {
 
         // set header
         HttpHeaders httpHeaders = new HttpHeaders();
 
-        AuthOptionRequest authOptionRequest = AuthOptionRequest
+        EnrollmentsAuthOptionRequest.RequestData authOptionRequestData = EnrollmentsAuthOptionRequest.RequestData
                 .builder()
-                .rpId(rpId)
-                .userId(createUserId(optionRequest.getUsername()))
-                .userVerification(optionRequest.getUserVerification())
+                .rp(rpId)
+                .platform("BROWSER")
+                .consentId(optionRequest.getConsentId())
                 .build();
 
-        HttpEntity<AuthOptionRequest> request = new HttpEntity<>(authOptionRequest, httpHeaders);
-        AuthOptionResponse response = restTemplate.postForObject(authChallengeUri, request, AuthOptionResponse.class);
+        EnrollmentsAuthOptionRequest authOptionRequest = EnrollmentsAuthOptionRequest
+                .builder()
+                .data(authOptionRequestData)
+                .build();
+
+        HttpEntity<EnrollmentsAuthOptionRequest> request = new HttpEntity<>(authOptionRequest, httpHeaders);
+        System.out.println("request ----> " + objectMapper.writeValueAsString(request));
+        String uri = authChallengeUri.replace("{ENROLLMENT_ID}", optionRequest.getEnrollmentId());
+        System.out.println("URI: " + uri);
+        EnrollmentsAuthOptionResponse response = restTemplate.postForObject(uri, request, EnrollmentsAuthOptionResponse.class);
+        System.out.println("response ---> " + objectMapper.writeValueAsString(response));
 
         ServerPublicKeyCredentialGetOptionsResponse serverResponse;
         serverResponse = ServerPublicKeyCredentialGetOptionsResponse
                 .builder()
-                .allowCredentials(response.getAllowCredentials())
-                .challenge(response.getChallenge())
-                .rpId(response.getRpId())
-                .timeout(response.getTimeout())
-                .userVerification(response.getUserVerification())
-                .extensions(response.getExtensions())
+                .allowCredentials(response.getData().getAllowCredentials())
+                .challenge(response.getData().getChallenge())
+                .rpId(response.getData().getRpId())
+                .timeout(response.getData().getTimeout())
+                .userVerification(response.getData().getUserVerification())
+                .extensions(response.getData().getExtensions())
                 .build();
 
         // error
-        if (response.getServerResponse().getInternalErrorCode() != 0) {
-            serverResponse.setStatus(Status.FAILED);
-            serverResponse.setErrorMessage(response.getServerResponse().getInternalErrorCodeDescription());
-            return serverResponse;
-        }
+//        if (response.getServerResponse().getInternalErrorCode() != 0) {
+//            serverResponse.setStatus(Status.FAILED);
+//            serverResponse.setErrorMessage(response.getServerResponse().getInternalErrorCodeDescription());
+//            return serverResponse;
+//        }
 
         serverResponse.setStatus(Status.OK);
 
-        httpServletResponse.addCookie(new Cookie(COOKIE_NAME, response.getSessionId()));
+//        httpServletResponse.addCookie(new Cookie(COOKIE_NAME, response.getSessionId()));
 
         return serverResponse;
     }
@@ -292,27 +300,27 @@ public class AdapterController {
     public AdapterServerResponse sendAuthenticationResponse(
             @RequestHeader String host,
             @RequestBody AdapterAuthServerPublicKeyCredential clientResponse,
-            HttpServletRequest httpServletRequest) {
+            HttpServletRequest httpServletRequest) throws JsonProcessingException {
 
         AdapterServerResponse serverResponse;
 
         // get session id
-        Cookie[] cookies = httpServletRequest.getCookies();
-        if (cookies == null || cookies.length == 0) {
-            //error
-            serverResponse = new AdapterServerResponse();
-            serverResponse.setStatus(Status.FAILED);
-            serverResponse.setErrorMessage("Cookie not found");
-            return serverResponse;
-        }
+//        Cookie[] cookies = httpServletRequest.getCookies();
+//        if (cookies == null || cookies.length == 0) {
+//            //error
+//            serverResponse = new AdapterServerResponse();
+//            serverResponse.setStatus(Status.FAILED);
+//            serverResponse.setErrorMessage("Cookie not found");
+//            return serverResponse;
+//        }
 
-        String sessionId = null;
-        for (Cookie cookie : cookies) {
-            if (COOKIE_NAME.equals(cookie.getName())) {
-                sessionId = cookie.getValue();
-                break;
-            }
-        }
+//        String sessionId = null;
+//        for (Cookie cookie : cookies) {
+//            if (COOKIE_NAME.equals(cookie.getName())) {
+//                sessionId = cookie.getValue();
+//                break;
+//            }
+//        }
 
         // prepare origin
         String scheme = httpServletRequest.getScheme();
@@ -329,20 +337,59 @@ public class AdapterController {
         // set header
         HttpHeaders httpHeaders = new HttpHeaders();
 
-        VerifyCredential verifyCredential = new VerifyCredential();
-        ServerAuthPublicKeyCredential serverAuthPublicKeyCredential = new ServerAuthPublicKeyCredential();
-        serverAuthPublicKeyCredential.setResponse(clientResponse.getResponse());
-        serverAuthPublicKeyCredential.setId(clientResponse.getId());
-        serverAuthPublicKeyCredential.setType(clientResponse.getType());
-        serverAuthPublicKeyCredential.setExtensions(clientResponse.getExtensions());
-        verifyCredential.setServerPublicKeyCredential(serverAuthPublicKeyCredential);
-        verifyCredential.setRpId(rpId);
-        verifyCredential.setSessionId(sessionId);
-        verifyCredential.setOrigin(builder.toString());
+        EnrollmentsVerifyCredential.RequestData.RiskSignals.ScreenDimensions screenDimensions =
+                new EnrollmentsVerifyCredential.RequestData.RiskSignals.ScreenDimensions();
+        screenDimensions.setHeight(1920);
+        screenDimensions.setWidth(1080);
 
-        HttpEntity<VerifyCredential> request = new HttpEntity<>(verifyCredential, httpHeaders);
+        EnrollmentsVerifyCredential.RequestData.RiskSignals riskSignals = new EnrollmentsVerifyCredential.RequestData.RiskSignals();
+        riskSignals.setDeviceId("deviceId");
+        riskSignals.setIsRootedDevice(false);
+        riskSignals.setScreenBrightness(1.0);
+        riskSignals.setElapsedTimeSinceBoot(5000);
+        riskSignals.setOsVersion("os version");
+        riskSignals.setUserTimeZoneOffset("-03");
+        riskSignals.setLanguage("pt");
+        riskSignals.setScreenDimensions(screenDimensions);
+        riskSignals.setAccountTenure(LocalDate.now());
 
-        restTemplate.postForObject(authResponseUri, request, VerifyCredentialResult.class);
+        byte[] userHandleByteArray = Base64.getDecoder().decode(clientResponse.getResponse().getUserHandle());
+
+        EnrollmentsVerifyCredential.RequestData.FidoAssertion.ChallengeResponse challengeResponse =
+                new EnrollmentsVerifyCredential.RequestData.FidoAssertion.ChallengeResponse();
+
+        challengeResponse.setClientDataJSON(clientResponse.getResponse().getClientDataJSON());
+        challengeResponse.setAuthenticatorData(clientResponse.getResponse().getAuthenticatorData());
+        challengeResponse.setSignature(clientResponse.getResponse().getSignature());
+        challengeResponse.setUserHandle(new String(userHandleByteArray, StandardCharsets.UTF_8));
+
+
+        EnrollmentsVerifyCredential.RequestData.FidoAssertion fidoAssertion =
+                new EnrollmentsVerifyCredential.RequestData.FidoAssertion();
+        fidoAssertion.setId(clientResponse.getId());
+        fidoAssertion.setRawId(clientResponse.getRawId());
+        fidoAssertion.setType(clientResponse.getType());
+        fidoAssertion.setResponse(challengeResponse);
+        fidoAssertion.setClientExtensionResults(clientResponse.getExtensions());
+
+        EnrollmentsVerifyCredential.RequestData verifyCredentialData = new EnrollmentsVerifyCredential.RequestData();
+        verifyCredentialData.setEnrollmentId(clientResponse.getEnrollmentId());
+        verifyCredentialData.setRiskSignals(riskSignals);
+        verifyCredentialData.setFidoAssertion(fidoAssertion);
+
+        EnrollmentsVerifyCredential verifyCredential = new EnrollmentsVerifyCredential();
+        verifyCredential.setData(verifyCredentialData);
+
+
+        HttpEntity<EnrollmentsVerifyCredential> request = new HttpEntity<>(verifyCredential, httpHeaders);
+        System.out.println("request ---> " + objectMapper.writeValueAsString(request));
+        String uri = authResponseUri
+                .replace("{ENROLLMENT_ID}", clientResponse.getEnrollmentId())
+                .replace("{CONSENT_ID}", clientResponse.getConsentId());
+
+        System.out.println("URI: " + uri);
+        EnrollmentsVerifyCredentialResult response = restTemplate.postForObject(uri, request, EnrollmentsVerifyCredentialResult.class);
+        System.out.println("response ---> " + objectMapper.writeValueAsString(response));
 
         serverResponse = new AdapterServerResponse();
         serverResponse.setStatus(Status.OK);

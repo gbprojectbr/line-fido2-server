@@ -24,4 +24,6 @@ import lombok.Data;
 public class ServerPublicKeyCredentialGetOptionsRequest {
     private String username;
     private UserVerificationRequirement userVerification;
+    private String enrollmentId;
+    private String consentId;
 }

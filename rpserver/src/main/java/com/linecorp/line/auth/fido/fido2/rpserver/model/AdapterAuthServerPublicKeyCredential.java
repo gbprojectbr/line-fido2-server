@@ -24,6 +24,8 @@ import lombok.Data;
 
 @Data
 public class AdapterAuthServerPublicKeyCredential extends Credential {
+    private String enrollmentId;
+    private String consentId;
     private String rawId;
     private ServerAuthenticatorAssertionResponse response;
     // extension

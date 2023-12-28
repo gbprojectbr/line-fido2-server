@@ -217,12 +217,16 @@ function authenticateButtonClicked() {
     $("#authenticateSpinner").removeClass("hidden");
 
     let username  = $("input[name='username']").val();
+    let enrollmentId  = $("input[name='enrollmentId']").val();
+    let consentId  = $("input[name='consentId']").val();
     let userVerification = $("input[name='userVerificationRequired']:checked").val();
 
     // prepare parameter
     let serverPublicKeyCredentialGetOptionsRequest = {
         username: username,
-        userVerification: userVerification
+        userVerification: userVerification,
+        enrollmentId: enrollmentId,
+        consentId: consentId
     };
 
     getAuthChallenge(serverPublicKeyCredentialGetOptionsRequest)
@@ -419,6 +423,9 @@ function getAssertion(options) {
             logObject("raw assertion", rawAssertion);
 
             let assertion = {
+
+                enrollmentId: $("input[name='enrollmentId']").val(),
+                consentId: $("input[name='consentId']").val(),
                 rawId: base64UrlEncode(rawAssertion.rawId),
                 id: base64UrlEncode(rawAssertion.rawId),
                 response: {
