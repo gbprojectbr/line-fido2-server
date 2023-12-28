@@ -123,6 +123,7 @@ function enableControls() {
 function registerButtonClicked() {
     let username  = $("input[name='username']").val();
     let displayName  = $("input[name='userDisplayName']").val();
+    let enrollmentId  = $("input[name='enrollmentId']").val();
     if (username === "") {
         $("#status").text("Input user name first");
         $("#status").removeClass('hidden');
@@ -130,6 +131,11 @@ function registerButtonClicked() {
     }
     if (displayName === "") {
       $("#status").text("Input display name first");
+      $("#status").removeClass('hidden');
+      return;
+    }
+    if (enrollmentId === "") {
+      $("#status").text("Input enrollmentId first");
       $("#status").removeClass('hidden');
       return;
     }
@@ -155,7 +161,8 @@ function registerButtonClicked() {
     // prepare parameter
     let serverPublicKeyCredentialCreationOptionsRequest = {
         username: username,
-        displayName: displayName
+        displayName: displayName,
+        enrollmentId: enrollmentId
     };
 
     // set authenticator selection criteria
@@ -355,6 +362,7 @@ function createCredential(options) {
             let attestation = {
                 rawId: base64UrlEncode(rawAttestation.rawId),
                 id: base64UrlEncode(rawAttestation.rawId),
+                enrollmentId: $("input[name='enrollmentId']").val(),
                 response : {
                     clientDataJSON: base64UrlEncode(rawAttestation.response.clientDataJSON),
                     attestationObject: base64UrlEncode(rawAttestation.response.attestationObject)

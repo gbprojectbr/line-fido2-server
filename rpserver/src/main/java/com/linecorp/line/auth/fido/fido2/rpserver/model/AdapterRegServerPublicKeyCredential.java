@@ -25,6 +25,7 @@ import lombok.Data;
 @Data
 public class AdapterRegServerPublicKeyCredential extends Credential {
     private String rawId;
+    private String enrollmentId;
     private ServerAuthenticatorAttestationResponse response;
     // extension
     private AuthenticationExtensionsClientOutputs extensions;

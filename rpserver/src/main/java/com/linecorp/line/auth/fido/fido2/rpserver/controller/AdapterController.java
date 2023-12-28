@@ -138,7 +138,7 @@ public class AdapterController {
 
         RequestOptionsData reqData = RequestOptionsData.builder()
                 .rp(rpId)
-                .platform("ANDROID")
+                .platform("BROWSER")
                 .build();
 
         RegOptionRequest1 regOptionRequest = RegOptionRequest1
@@ -148,9 +148,11 @@ public class AdapterController {
 
         HttpEntity<RegOptionRequest1> request = new HttpEntity<>(regOptionRequest, httpHeaders);
         ObjectMapper objectMapper = new ObjectMapper();
-        System.out.println(objectMapper.writeValueAsString(request));
-        RegOptionResponse1 response = restTemplate.postForObject(regChallengeUri, request, RegOptionResponse1.class);
-        System.out.println(objectMapper.writeValueAsString(response));
+        System.out.println("request -------> " + objectMapper.writeValueAsString(request));
+        String uri = regChallengeUri.replace("{ENROLLMENT_ID}", optionsRequest.getEnrollmentId());
+        System.out.println("URI: " + uri);
+        RegOptionResponse1 response = restTemplate.postForObject(uri, request, RegOptionResponse1.class);
+        System.out.println("response -------> " + objectMapper.writeValueAsString(response));
 
         ServerPublicKeyCredentialCreationOptionsResponse serverResponse = ServerPublicKeyCredentialCreationOptionsResponse
                 .builder()
@@ -231,8 +233,10 @@ public class AdapterController {
         ObjectMapper objectMapper = new ObjectMapper();
         HttpEntity<RegisterCredential1> request = new HttpEntity<>(registerCredential, httpHeaders);
 
-        System.out.println(objectMapper.writeValueAsString(request));
-        restTemplate.postForObject(regResponseUri, request, Void.class);
+        System.out.println("request -------> " + objectMapper.writeValueAsString(request));
+        String uri = regResponseUri.replace("{ENROLLMENT_ID}", clientResponse.getEnrollmentId());
+        System.out.println("URI: " + uri);
+        restTemplate.postForObject(uri, request, Void.class);
 
         serverResponse = new AdapterServerResponse();
         serverResponse.setStatus(Status.OK);

@@ -26,6 +26,7 @@ import lombok.Data;
 public class ServerPublicKeyCredentialCreationOptionsRequest {
     private String username;
     private String displayName;
+    private String enrollmentId;
     private AuthenticatorSelectionCriteria authenticatorSelection;
     private AttestationConveyancePreference attestation = AttestationConveyancePreference.none;
     private CredProtect credProtect;
