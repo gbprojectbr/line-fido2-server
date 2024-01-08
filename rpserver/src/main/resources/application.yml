@@ -27,9 +27,9 @@ fido2-server:
   host: obk-enrollments-api.obk-hml.limbo.work
   port: 80
   endpoint:
-    get-reg-challenge: /enrollments/{ENROLLMENT_ID}/fido-registration-options
-    get-auth-challenge: /enrollments/{ENROLLMENT_ID}/fido-sign-options
-    send-reg-response: /enrollments/{ENROLLMENT_ID}/fido-registration
-    send-auth-response: /enrollments/{ENROLLMENT_ID}/consents/{CONSENT_ID}/authenticate
+    get-reg-challenge: /enrollments/v1/enrollments/{ENROLLMENT_ID}/fido-registration-options
+    get-auth-challenge: /enrollments/v1/enrollments/{ENROLLMENT_ID}/fido-sign-options
+    send-reg-response: /enrollments/v1/enrollments/{ENROLLMENT_ID}/fido-registration
+    send-auth-response: /enrollments/v1/enrollments/{ENROLLMENT_ID}/consents/{CONSENT_ID}/authenticate
     get-delete-credentials: /fido2/credentials
 
