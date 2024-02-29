@@ -89,6 +89,7 @@ dependencies {
     implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor')
     runtime('org.springframework.boot:spring-boot-devtools')
     implementation('org.springframework.boot:spring-boot-starter-logging')
+    implementation('net.logstash.logback:logstash-logback-encoder:6.6')
     implementation('org.springframework.boot:spring-boot-starter-validation')
 
     implementation 'junit:junit:4.12'
