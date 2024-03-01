@@ -38,9 +38,9 @@
                     <context/>
                     <mdc/>
 
-                    provides the fields in the configured pattern
+                    <!-- provides the fields in the configured pattern -->
                     <pattern>
-                        <!--                    <omitEmptyFields>true</omitEmptyFields>-->
+                        <omitEmptyFields>true</omitEmptyFields>
                         <!-- the pattern that defines what to include -->
                         <pattern>
                             {
