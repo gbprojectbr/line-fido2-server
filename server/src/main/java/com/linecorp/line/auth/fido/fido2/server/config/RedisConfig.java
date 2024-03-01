@@ -28,7 +28,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 
 @Configuration
-@Profile("!prod")
+@Profile("hml | prod | local")
 public class RedisConfig {
     @Value("${redis.host}")
     private String redisHostName;
