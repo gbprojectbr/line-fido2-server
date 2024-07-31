@@ -2,7 +2,7 @@
 if (env.BRANCH_NAME == "main") {
     ciKubernetesDeploySkipSonar {
         serviceNamespace = "openbanking"
-        jobName = "line-fido2-server"
+        jobName = "pp-ms-line-fido2-server"
         betaFeatures = [
             obk: true,
             syncHMLWithPRD: false
@@ -21,7 +21,7 @@ if (env.BRANCH_NAME == "main") {
 if (env.BRANCH_NAME == "hml") {
     ciKubernetesDeploySkipSonar {
         serviceNamespace = "openbanking"
-        jobName = "line-fido2-server"
+        jobName = "pp-ms-line-fido2-server"
         betaFeatures = [
             obk: true
         ]
@@ -40,7 +40,7 @@ if (env.BRANCH_NAME == "hml") {
 if (env.CHANGE_ID) {
     ciRunTests {
         serviceNamespace = "openbanking"
-        jobName = "line-fido2-server"
+        jobName = "pp-ms-line-fido2-server"
         cacheVolumes = [
             'Dockerfile-tests': [
                 'gradle': '/home/gradle/.gradle'
