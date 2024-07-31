@@ -25,7 +25,7 @@ import java.util.List;
 @SpringBootTest
 class MdsV3MetadataHelperTest {
 
-    public static final int EXPECTED_METADATA_SIZE = 118;
+    public static final int EXPECTED_METADATA_SIZE = 155;
     @Autowired
     private MdsV3MetadataHelper mdsV3MetadataHelper;
 
