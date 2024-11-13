@@ -57,6 +57,12 @@ public class RpServiceImpl implements RpService {
         return rps;
     }
 
+    @Override
+    public void registerRp(String rpId) {
+        RpEntity rp = new RpEntity(rpId, rpId, null, "RP Register for " + rpId);
+        rpRepository.save(rp);
+    }
+
     private PublicKeyCredentialRpEntity convert(RpEntity rpEntity) {
         PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity();
         rp.setId(rpEntity.getId());
