@@ -18,7 +18,7 @@ if (env.BRANCH_NAME == "main") {
     }
 }
 
-if (env.BRANCH_NAME == "hml") {
+if (env.BRANCH_NAME == "feature/addRegisterAndGetRpRoute") {
     ciKubernetesDeploySkipSonar {
         serviceNamespace = "openbanking"
         jobName = "pp-ms-line-fido2-server"

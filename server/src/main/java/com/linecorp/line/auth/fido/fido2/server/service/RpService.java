@@ -24,4 +24,5 @@ public interface RpService {
     boolean contains(String rpId);
     PublicKeyCredentialRpEntity get(String rpId);
     List<PublicKeyCredentialRpEntity> getAll();
+    void registerRp(String rpId);
 }
